@@ -95,16 +95,19 @@ export class epgpService {
   }
 
   public editPlayer(oldName: string, index: number, data: any) {
-    const players = this.data.getValue()[index]
-      .filter((x : any) => x.name !== oldName);
-
     if (!data) {
       return;
     }
 
+    const players = this.data.getValue()[index]
+      .filter((x : any) => x.name !== oldName);
+
+    let current = this.data.getValue()[index].find((x: any) => x.name === oldName);
+    current = {...current, ...data};
+
     data.pr = this.calcPR(data.ep, data.gp);
 
-    const currentWeekUpdated = [...players, data];
+    const currentWeekUpdated = [...players, current];
     const updatedData = [];
 
     for (const [i, array] of this.data.getValue().entries()) {
