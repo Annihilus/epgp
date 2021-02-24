@@ -1,0 +1,33 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span>EPGP Online</span>
+  <span class="example-spacer"></span>
+</mat-toolbar>
+
+<mat-drawer-container class="wrapper" [hasBackdrop]="true">
+  <mat-drawer #drawer>
+    <app-settings></app-settings>
+  </mat-drawer>
+  <mat-drawer-content class="content">
+    <div class="toolbar">
+      <button mat-raised-button (click)="drawer.toggle()">Настройки</button>
+      <button mat-raised-button (click)="decay()">След. КД (списать и начислить)</button>
+    </div>
+    <mat-tab-group
+      [animationDuration]="0"
+      [selectedIndex]="selected.value"
+      (selectedIndexChange)="selected.setValue($event)"
+    >
+      <mat-tab *ngFor="let item of data | async; let i = index">
+        <ng-template mat-tab-label>Неделя {{ i + 1 }}</ng-template>
+        <app-players-list [index]="i"></app-players-list>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-drawer-content>
+</mat-drawer-container>
+
+<button (click)="openAddingPlayerModal(selected.value)" class="addPlayer" mat-fab color="primary" aria-label="Example icon button with a delete icon">
+  <mat-icon>add</mat-icon>
+</button>
