@@ -84,10 +84,6 @@ export class epgpService {
 
       // TODO remove decayPlayer
       updatedPlayer = this.decayPlayer({...updatedPlayer});
-      updatedPlayer.log.push({
-        text: 'Decay',
-        decay: true,
-      })
       updatedPlayers.push(updatedPlayer);
     }
 
@@ -114,47 +110,29 @@ export class epgpService {
     player.pr = this.calcPR(player.ep, player.gp);
 
     const updatedData = [];
+    let lastAdded = player;
 
     for (const [i, array] of this.data.getValue().entries()) {
-      let updatedPlayer = {...player}
+      if (index === i) {
+        updatedData.push(this.sortByPr([...array, player]));
 
-      if (i === index) {
-        updatedPlayer = this.recalcPlayer(updatedPlayer);
-        let result = [...array, updatedPlayer];
-
-        if (i === 0) {
-          result = this.sortByPr(result);
-        }
-
-        updatedData.push(result);
+        continue;
       }
 
       if (i > index) {
-        debugger;
-        const previousPlayer = this.data.getValue()[i - 1].find(x => x.name === player.name);
-
-        updatedPlayer.log = [{
-          start: true,
-          text: 'Создание пользователя',
-          ep: previousPlayer.ep,
-          gp: previousPlayer.gp,
-        }];
-
-        updatedPlayer = this.weeklyEp(updatedPlayer)
-
+        let updatedPlayer = {...lastAdded};
+        updatedPlayer = this.weeklyEp(updatedPlayer);
         updatedPlayer.log.push({
           decay: true,
           text: 'Decay',
         });
 
-        updatedPlayer = this.recalcPlayer(updatedPlayer);
         let result = [...array, updatedPlayer];
-
-        if (i === 0) {
-          result = this.sortByPr(result);
-        }
+        result = this.sortByPr(result);
 
         updatedData.push(result);
+
+        lastAdded = updatedPlayer;
 
         continue;
       }
@@ -320,6 +298,11 @@ export class epgpService {
 
     player.gp = Number(gp) < this._settings.minGP ? this._settings.minGP : gp;
     player.pr = this.calcPR(player.ep, player.gp);
+
+    player.log.push({
+      text: 'Decay',
+      decay: true,
+    })
 
     return player;
   }
