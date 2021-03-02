@@ -19,7 +19,7 @@
   </div>
   <div mat-dialog-actions>
     <button mat-button (click)="onCancel()">Отменить</button>
-    <button mat-button [mat-dialog-close]="data" color="primary">Начислить</button>
+    <button [disabled]="!formGroup.valid" mat-button [mat-dialog-close]="data" color="primary">Начислить</button>
   </div>
 
 </ng-container>

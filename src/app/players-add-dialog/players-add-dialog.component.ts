@@ -49,7 +49,7 @@ export class PlayersAddDialogComponent implements OnInit {
       });
     } else {
       this.formGroup = this._builder.group({
-        ep: this.player.ep || 0,
+        name: this.player.name,
         gp: this.player.gp || defaults.minGP,
         description: this.player.description,
       });

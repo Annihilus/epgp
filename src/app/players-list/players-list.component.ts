@@ -22,7 +22,7 @@ export class PlayersListComponent implements OnInit, AfterViewInit {
 
   public data: MatTableDataSource<any> = new MatTableDataSource<any>([]);
 
-  public displayedColumns: string[] = ['name', 'description', 'ep', 'gp', 'pr', 'actions'];
+  public displayedColumns: string[] = ['name', 'description', 'ep', 'gp', 'pr', 'charge', 'toolbar'];
 
   constructor(
     private _dialog: MatDialog,
@@ -64,8 +64,12 @@ export class PlayersListComponent implements OnInit, AfterViewInit {
     dialogRef
       .afterClosed()
       .subscribe(data => {
-        this._service.editPlayer(player.name, this.index, data);
+        this._service.editPlayer(player.name, data);
       });
+  }
+
+  public deletePlayer(name) {
+    this._service.deletePlayer(name);
   }
 
 }

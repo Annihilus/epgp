@@ -19,6 +19,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { epgpService } from './service';
 import { PlayersListComponent } from './players-list/players-list.component';
@@ -51,7 +52,8 @@ import { PlayersAddEpgpComponent } from './players-add-epgp/players-add-epgp.com
     MatSidenavModule,
     MatPaginatorModule,
     MatDialogModule,
-    MatTabsModule
+    MatTabsModule,
+    MatMenuModule,
   ],
   providers: [
     epgpService

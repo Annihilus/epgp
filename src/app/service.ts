@@ -31,9 +31,8 @@ export class epgpService {
 
 
   public set settings(params: settingsParams) {
-    this.updateData(params);
-
     this._settings = params;
+    this.updateData();
   }
 
   public get settings(): settingsParams {
@@ -46,18 +45,49 @@ export class epgpService {
     weekEP: 150,
   };
 
-  public players: BehaviorSubject<any> = new BehaviorSubject<any>(ELEMENT_DATA);
-
   public data: BehaviorSubject<any> = new BehaviorSubject<any>([ELEMENT_DATA]);
 
-  public updateData(params) {
-    const data = this.data.getValue()[0];
+  public updateData() {
+    const data = this.data.getValue();
+    const updatedData = [];
 
-    data.forEach(item => {
-      if (item.gp < params.minGP) {
-        this.editPlayer(item.name, 0, { ...item, gp: params.minGP });
+    for (const [index, week] of data.entries()) {
+      if (!week.length) {
+        updatedData.push([]);
+
+        continue;
       }
-    });
+
+      const updatedWeek = [];
+
+      for (const player of week) {
+        const weekEP = player.log.find(x => x.weekly);
+        if (weekEP) {
+          weekEP.ep = this._settings.weekEP;
+        }
+
+        if (index !== 0) {
+          const previous = data[index - 1].find(x => x.name === player.name);
+
+          if (previous) {
+            player.log[0] = {
+              ...player.log[0],
+              ep: previous.ep,
+              gp: previous.gp
+            };
+          }
+        }
+
+        updatedWeek.push(this.recalcPlayer(player));
+      }
+
+      updatedData.push(updatedWeek);
+    };
+
+    if (updatedData.length) {
+      this.data.next(updatedData);
+    }
+
   }
 
   public initData() {
@@ -95,6 +125,10 @@ export class epgpService {
   }
 
   public addPlayer(data: any, index: number) {
+    if (!data) {
+      return;
+    }
+
     const player = data;
 
     player.log = [
@@ -110,7 +144,11 @@ export class epgpService {
     player.pr = this.calcPR(player.ep, player.gp);
 
     const updatedData = [];
-    let lastAdded = player;
+    let lastAdded = { ...player, log: [{
+      text: 'Начало недели',
+      ep: player.ep,
+      gp: player.gp
+    }]};
 
     for (const [i, array] of this.data.getValue().entries()) {
       if (index === i) {
@@ -122,17 +160,21 @@ export class epgpService {
       if (i > index) {
         let updatedPlayer = {...lastAdded};
         updatedPlayer = this.weeklyEp(updatedPlayer);
-        updatedPlayer.log.push({
+        (updatedPlayer.log as any).push({
           decay: true,
           text: 'Decay',
         });
 
-        let result = [...array, updatedPlayer];
+        let result = [...array, this.recalcPlayer(updatedPlayer)];
         result = this.sortByPr(result);
 
         updatedData.push(result);
 
-        lastAdded = updatedPlayer;
+        lastAdded = { ...updatedPlayer, log: [{
+          text: 'Начало недели',
+          ep: updatedPlayer.ep,
+          gp: updatedPlayer.gp
+        }]};
 
         continue;
       }
@@ -140,56 +182,16 @@ export class epgpService {
       updatedData.push([...array]);
     }
 
-    this.data.next(updatedData);
-  }
-
-  public editPlayer(oldName: string, index: number, data: any) {
-    if (!data) {
-      return;
-    }
-
-    const players = this.data.getValue()[index]
-      .filter((x : any) => x.name !== oldName);
-
-    let current = this.data.getValue()[index].find((x: any) => x.name === oldName);
-    current = {...current, ...data};
-
-    current.gp = this._settings.minGP >= current.gp ? current.gp : this._settings.minGP;
-    current.pr = this.calcPR(data.ep, data.gp);
-
-    const currentWeekUpdated = [...players, current];
-    const updatedData = [];
-
-    for (const [i, array] of this.data.getValue().entries()) {
-      if (i === index) {
-        updatedData.push(currentWeekUpdated);
-
-        continue;
-      }
-
-      if (i > index) {
-        const filtered = array
-          .filter((x : any) => x.name !== oldName);
-        const modifier = i - index;
-        const updatedPlayer = this.decayPlayer({...data}, modifier);
-        let result = [...filtered, updatedPlayer];
-
-        if (i === 0) {
-          result = this.sortByPr(result);
-        }
-
-        updatedData.push(result);
-
-        continue;
-      }
-
-      updatedData.push([...array]);
-    }
+    console.log(updatedData);
 
     this.data.next(updatedData);
   }
 
   public chargeEPGP(name: string, index: number, data) {
+    if (!data) {
+      return;
+    }
+
     const weekData = this.data.getValue()[index];
     const player = weekData.find(x => x.name === name);
 
@@ -221,7 +223,6 @@ export class epgpService {
       if (i > index) {
         const filtered = array
           .filter((x : any) => x.name !== name);
-        const modifier = i - index;
         const player = array.find(x => x.name === name);
         player.log[0] = {
           ...player.log[0],
@@ -229,6 +230,12 @@ export class epgpService {
           gp: startParams.gp
         }
         let updatedPlayer = this.recalcPlayer(player);
+
+        startParams = {
+          ep: updatedPlayer.ep,
+          gp: updatedPlayer.gp
+        }
+
         let result = [...filtered, updatedPlayer];
 
         if (i === 0) {
@@ -281,6 +288,7 @@ export class epgpService {
     player.ep += this._settings.weekEP;
 
     player.log.push({
+      weekly: true,
       text: 'Недельное начисление',
       ep: this._settings.weekEP
     });
@@ -313,6 +321,41 @@ export class epgpService {
 
   public sortByPr(players: playerData[]): playerData[] {
     return players.sort((a: any, b: any) => b.pr - a.pr);
+  }
+
+  public editPlayer(oldName: string, data: any) {
+    if (!data) {
+      return;
+    }
+
+    const list = this.data.getValue();
+
+    list.forEach(week => {
+      if (week.length) {
+        let player = week.find(x => x.name === oldName);
+
+        if (player) {
+          player.name = data.name;
+          player.description = data.description;
+        }
+      }
+    });
+
+    this.data.next(list);
+  }
+
+  public deletePlayer(player: playerData) {
+    const list = this.data.getValue();
+    const updatedData = [];
+
+    list.forEach(week => {
+      if (week.length) {
+        const filtered = week.filter(x => x.name !== player.name);
+        updatedData.push(filtered);
+      }
+    });
+
+    this.data.next(updatedData);
   }
 
 }
