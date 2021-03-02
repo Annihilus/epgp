@@ -7,6 +7,7 @@ import { epgpService, playerData } from '../service';
 import { MatDialog } from '@angular/material/dialog';
 
 import { PlayersAddDialogComponent } from '../players-add-dialog/players-add-dialog.component';
+import { PlayersAddEpgpComponent } from '../players-add-epgp/players-add-epgp.component';
 
 @Component({
   selector: 'app-players-list',
@@ -32,12 +33,25 @@ export class PlayersListComponent implements OnInit, AfterViewInit {
     this._service.data
       .subscribe(data => {
         this.data = new MatTableDataSource<any>(data[this.index]);
-        console.log(data);
       })
   }
 
   ngAfterViewInit() {
     this.data.sort = this.sort;
+  }
+
+  public chargeEPGP(player: playerData) {
+    const dialogRef = this._dialog
+      .open(PlayersAddEpgpComponent, {
+        width: '270px',
+        data: { player }
+      });
+
+    dialogRef
+      .afterClosed()
+      .subscribe(data => {
+        this._service.chargeEPGP(player.name, this.index, data);
+      });
   }
 
   public changeParams(player: playerData) {

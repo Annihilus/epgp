@@ -34,10 +34,16 @@ export class PlayersAddDialogComponent implements OnInit {
     const defaults = this._service.settings;
     this.player = this.data ? (this.data as any).player : null;
 
+    (this.data as any) = {
+      name: 'test',
+      ep: 100,
+      gp: defaults.minGP,
+    }
+
     if (!this.player) {
       this.formGroup = this._builder.group({
-        name:  '',
-        ep: 0,
+        name: 'test',
+        ep: 100,
         gp: defaults.minGP,
         description: '',
       });
@@ -52,7 +58,12 @@ export class PlayersAddDialogComponent implements OnInit {
     this.formGroup
       .valueChanges
       .subscribe(data => {
-        this.data = data;
+        (this.data as any) = {
+          name: data.name,
+          description: data.description,
+          ep: parseInt(data.ep, 0),
+          gp: parseInt(data.gp, 0),
+        };
       });
 
   }

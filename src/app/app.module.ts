@@ -24,6 +24,7 @@ import { epgpService } from './service';
 import { PlayersListComponent } from './players-list/players-list.component';
 import { PlayersListItemComponent } from './players-list-item/players-list-item.component';
 import { PlayersAddDialogComponent } from './players-add-dialog/players-add-dialog.component';
+import { PlayersAddEpgpComponent } from './players-add-epgp/players-add-epgp.component';
 
 @NgModule({
   declarations: [
@@ -31,7 +32,8 @@ import { PlayersAddDialogComponent } from './players-add-dialog/players-add-dial
     SettingsComponent,
     PlayersListComponent,
     PlayersListItemComponent,
-    PlayersAddDialogComponent
+    PlayersAddDialogComponent,
+    PlayersAddEpgpComponent
   ],
   imports: [
     BrowserModule,
